@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PortScan Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🔍 PortScan Pro</h1>
+        <p class="subtitle">Network Port Scanner & Security Analyzer</p>
+
+        <form method="POST">
+
+            <label>Target IP / Domain</label>
+            <input
+                type="text"
+                name="target"
+                placeholder="e.g. 127.0.0.1"
+                required
+            >
+
+            <div class="port-inputs">
+
+                <div>
+                    <label>Start Port</label>
+                    <input
+                        type="number"
+                        name="start_port"
+                        value="1"
+                        min="1"
+                        max="65535"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label>End Port</label>
+                    <input
+                        type="number"
+                        name="end_port"
+                        value="500"
+                        min="1"
+                        max="65535"
+                        required
+                    >
+                </div>
+
+            </div>
+
+            <button type="submit">START SCAN</button>
+
+        </form>
+
+        {% if error %}
+            <div class="error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if results %}
+
+            <h2>Scan Results</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Port</th>
+                        <th>Service</th>
+                        <th>Risk</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for result in results %}
+
+                    <tr>
+                        <td>{{ result.port }}</td>
+                        <td>{{ result.service }}</td>
+                        <td>{{ result.risk }}</td>
+                        <td>{{ result.description }}</td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
