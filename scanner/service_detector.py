@@ -1,40 +1,50 @@
-import socket
+import nmap
 
 
-COMMON_SERVICES = {
-    21: "FTP",
-    22: "SSH",
-    23: "Telnet",
-    25: "SMTP",
-    53: "DNS",
-    80: "HTTP",
-    110: "POP3",
-    139: "NetBIOS",
-    143: "IMAP",
-    443: "HTTPS",
-    445: "SMB",
-    3306: "MySQL",
-    3389: "RDP",
-    5432: "PostgreSQL",
-    8080: "HTTP Proxy"
-}
+def detect_services(target, start_port, end_port):
 
+    scanner = nmap.PortScanner()
 
-def detect_service(target, port):
-    if port in COMMON_SERVICES:
-        return COMMON_SERVICES[port]
+    port_range = f"{start_port}-{end_port}"
 
-    try:
-        service = socket.getservbyport(port, "tcp")
-        return service.upper()
+    print(f"Nmap scanning: {target} ports {port_range}")
+    
+    scanner.scan(
+        target,
+        port_range,
+        arguments="-sV --version-light"
+    )
 
-    except OSError:
-        return "Unknown"
+    results = []
 
+    for host in scanner.all_hosts():
 
-if __name__ == "__main__":
-    target = "127.0.0.1"
+        if "tcp" not in scanner[host]:
+            continue
 
-    for port in [22, 80, 135, 443, 445]:
-        service = detect_service(target, port)
-        print(f"Port {port}: {service}")
+        for port in scanner[host]["tcp"]:
+
+            port_info = scanner[host]["tcp"][port]
+
+            if port_info["state"] == "open":
+
+                service = port_info.get("name", "Unknown")
+                product = port_info.get("product", "")
+                version = port_info.get("version", "")
+
+                service_details = service
+
+                if product:
+                    service_details += f" ({product}"
+
+                    if version:
+                        service_details += f" {version}"
+
+                    service_details += ")"
+
+                results.append({
+                    "port": port,
+                    "service": service_details
+                })
+
+    return results

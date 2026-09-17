@@ -1,12 +1,11 @@
 from flask import Flask, render_template, request
 
-from reports.report_generator import generate_report
 from scanner.target_validator import validate_target
-from scanner.port_scanner import scan_ports
-from scanner.service_detector import detect_service
+from scanner.service_detector import detect_services
 from scanner.risk_analyzer import analyze_risk
 
 from database.database import initialize_database, get_connection
+from reports.report_generator import generate_report
 
 
 app = Flask(__name__)
@@ -14,49 +13,60 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+
     results = []
     error = None
 
     if request.method == "POST":
 
         target = request.form["target"]
+
         start_port = int(request.form["start_port"])
         end_port = int(request.form["end_port"])
 
         target_ip = validate_target(target)
 
         if not target_ip:
+
             error = "Invalid target."
 
         elif start_port > end_port:
+
             error = "Start port must be less than end port."
 
         else:
-            scanned_ports = scan_ports(
-                target_ip,
-                start_port,
-                end_port
-            )
 
-            connection = get_connection()
+            try:
 
-            cursor = connection.execute(
-                """
-                INSERT INTO scans (target, start_port, end_port)
-                VALUES (?, ?, ?)
-                """,
-                (target_ip, start_port, end_port)
-            )
+                scanned_services = detect_services(
+                    target_ip,
+                    start_port,
+                    end_port
+                )
 
-            scan_id = cursor.lastrowid
+                connection = get_connection()
 
-            for result in scanned_ports:
+                cursor = connection.execute(
+                    """
+                    INSERT INTO scans
+                    (target, start_port, end_port)
+                    VALUES (?, ?, ?)
+                    """,
+                    (
+                        target_ip,
+                        start_port,
+                        end_port
+                    )
+                )
 
-                if result["status"] == "open":
+                scan_id = cursor.lastrowid
+
+                for result in scanned_services:
 
                     port = result["port"]
-                    service = detect_service(target_ip, port)
-                    risk, description = analyze_risk(port)
+                    service = result["service"]
+
+                    risk, description = analyze_risk(port, service)
 
                     results.append({
                         "port": port,
@@ -80,8 +90,12 @@ def index():
                         )
                     )
 
-            connection.commit()
-            connection.close()
+                connection.commit()
+                connection.close()
+
+            except Exception as e:
+
+                error = f"Nmap scan error: {str(e)}"
 
     return render_template(
         "index.html",
@@ -89,8 +103,10 @@ def index():
         error=error
     )
 
+
 @app.route("/history")
 def history():
+
     connection = get_connection()
 
     scans = connection.execute(
@@ -104,8 +120,10 @@ def history():
         scans=scans
     )
 
+
 @app.route("/scan/<int:scan_id>")
 def scan_details(scan_id):
+
     connection = get_connection()
 
     scan = connection.execute(
@@ -129,8 +147,10 @@ def scan_details(scan_id):
         results=results
     )
 
+
 @app.route("/report/<int:scan_id>")
 def report(scan_id):
+
     connection = get_connection()
 
     scan = connection.execute(
@@ -150,11 +170,17 @@ def report(scan_id):
 
     filename = f"reports/scan_{scan_id}.pdf"
 
-    generate_report(scan, results, filename)
+    generate_report(
+        scan,
+        results,
+        filename
+    )
 
     return filename
 
 
 if __name__ == "__main__":
+
     initialize_database()
+
     app.run(debug=False)
