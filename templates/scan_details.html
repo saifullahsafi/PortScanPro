@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Scan Details - PortScan Pro</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🔎 Scan Details</h1>
+
+    <p class="subtitle">
+        Target: {{ scan.target }}
+        | Ports: {{ scan.start_port }} - {{ scan.end_port }}
+        | Time: {{ scan.scan_time }}
+    </p>
+
+    {% if results %}
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Port</th>
+                <th>Service</th>
+                <th>Risk</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for result in results %}
+
+            <tr>
+                <td>{{ result.port }}</td>
+                <td>{{ result.service }}</td>
+                <td>
+                    <span class="risk-{{ result.risk|lower }}">
+                        {{ result.risk }}
+                    </span>
+                </td>
+                <td>{{ result.description }}</td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <p>No open ports were found.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('report', scan_id=scan.id) }}"
+    class="history-link">
+        📄 Generate PDF Report
+    </a>
+
+    <br>
+    <br>
+
+    <a href="/history" style="color: #38bdf8;">
+        ← Back to History
+    </a>
+
+</div>
+
+</body>
+</html>

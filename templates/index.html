@@ -43,7 +43,7 @@
                     <input
                         type="number"
                         name="end_port"
-                        value="500"
+                        value="1024"
                         min="1"
                         max="65535"
                         required
@@ -53,6 +53,9 @@
             </div>
 
             <button type="submit">START SCAN</button>
+            <a href="/history" class="history-link">
+                 📋 Scan History
+            </a>
 
         </form>
 
@@ -84,7 +87,11 @@
                     <tr>
                         <td>{{ result.port }}</td>
                         <td>{{ result.service }}</td>
-                        <td>{{ result.risk }}</td>
+                        <td>
+                            <span class="risk-{{ result.risk|lower }}">
+                                {{ result.risk }}
+                            </span>
+                        </td>
                         <td>{{ result.description }}</td>
                     </tr>
 
@@ -97,6 +104,6 @@
         {% endif %}
 
     </div>
-
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

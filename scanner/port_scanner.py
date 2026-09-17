@@ -1,7 +1,8 @@
 import socket
+from concurrent.futures import ThreadPoolExecutor
 
 
-def scan_port(target, port, timeout=0.1):
+def scan_port(target, port, timeout=0.2):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
@@ -20,18 +21,30 @@ def scan_port(target, port, timeout=0.1):
 
 
 def scan_ports(target, start_port, end_port):
+
     results = []
 
-    for port in range(start_port, end_port + 1):
-        status = scan_port(target, port)
+    with ThreadPoolExecutor(max_workers=100) as executor:
 
-        results.append({
-            "port": port,
-            "status": status
-        })
+        statuses = executor.map(
+            lambda port: scan_port(target, port),
+            range(start_port, end_port + 1)
+        )
+
+        for port, status in zip(
+            range(start_port, end_port + 1),
+            statuses
+        ):
+            results.append({
+                "port": port,
+                "status": status
+            })
 
     return results
+
+
 if __name__ == "__main__":
+
     target = "127.0.0.1"
 
     results = scan_ports(target, 1, 500)
