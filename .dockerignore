@@ -1,0 +1,6 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+portscan.db
+reports/*.pdf

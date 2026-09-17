@@ -179,8 +179,9 @@ def report(scan_id):
     return filename
 
 
-if __name__ == "__main__":
+initialize_database()
 
-    initialize_database()
+
+if __name__ == "__main__":
 
     app.run(debug=False)
